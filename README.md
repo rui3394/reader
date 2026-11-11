@@ -2,7 +2,7 @@
 
 基于 [foliate-js](https://github.com/johnfactotum/foliate-js) 的本地电子书阅读器：**多本书同时打开（多标签）、拖拽即读、正文自由划选复制、全文搜索跳转选中、断网可用**。零框架、零构建、零后端，克隆即可运行。
 
-**在线试用**：<https://reader-2ggs.zai.site>（图书文件只在浏览器本地解析，不会上传到任何服务器）
+**在线试用**：<https://rui3394.github.io/reader/>（图书文件只在浏览器本地解析，不会上传到任何服务器）
 
 ## 功能
 
