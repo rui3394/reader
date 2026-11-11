@@ -17,7 +17,9 @@
 
 ## 快速开始
 
-需要通过 HTTP 访问（ES Module / Service Worker 限制），任意静态服务器均可：
+**在线使用（本仓库已启用 GitHub Pages）**：<https://rui3394.github.io/reader/>
+
+本地运行（需经 HTTP 访问，ES Module / Service Worker 的限制；任意静态服务器均可，无构建步骤）：
 
 ```bash
 git clone https://github.com/rui3394/reader.git
@@ -27,7 +29,7 @@ npx serve .          # 或 python -m http.server 8080
 
 浏览器打开 `http://127.0.0.1:3000`（或对应端口），拖书进去即可。
 
-> 也可以直接为本仓库开启 GitHub Pages（根目录即站点根，无需构建），或部署到任意静态托管。
+> 部署到其他静态托管（Netlify / Vercel / Cloudflare Pages 等）同样开箱即用：站点根 = 仓库根，无需任何构建命令。
 
 ## 支持格式与限制
 
