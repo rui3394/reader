@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="极简本地电子书阅读器：EPUB / AZW3 / MOBI / FB2，多标签，可划选复制">
+<!-- 与 foliate-js 官方 demo 一致的 CSP：脚本仅同源，正文渲染在 blob: iframe 中 -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' blob:; script-src 'self'; style-src 'self' blob: 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' blob: data:; font-src 'self' blob: data:; frame-src blob: data:; object-src blob: data:; form-action 'none';">
+<title>Reader</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root {
+    --bar-h: 36px;
+    --bar-bg: #26282c;
+    --bar-fg: #d8d9dc;
+    --accent: #4a8fe2;
+    --bg: #17181b;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--bar-fg);
+    font: 14px/1.4 system-ui, "Segoe UI", "Microsoft YaHei", sans-serif;
+    user-select: none;
+}
+
+/* ── 顶部工具栏（≤40px）────────────────────────── */
+#toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--bar-h);
+    padding: 0 8px;
+    background: var(--bar-bg);
+    border-bottom: 1px solid #0006;
+}
+button, select {
+    flex: none;
+    height: 26px;
+    border: 1px solid #45484e;
+    border-radius: 5px;
+    background: #33363c;
+    color: var(--bar-fg);
+    font: inherit;
+    line-height: 1;
+    padding: 0 9px;
+    cursor: pointer;
+}
+button:hover, select:hover { background: #3d4047; }
+button:active { transform: translateY(1px); }
+
+/* 标签栏：水平滚动 */
+#tabs {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+#tabs::-webkit-scrollbar { height: 3px; }
+#tabs::-webkit-scrollbar-thumb { background: #4a4d54; border-radius: 2px; }
+.tab {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 180px;
+    height: 26px;
+    padding: 0 4px 0 10px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    background: transparent;
+    color: #a9abb1;
+}
+.tab:hover { background: #33363c; }
+.tab.active { background: #3a414b; color: #fff; border-color: #55595f; }
+.tab .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab .close {
+    width: 17px; height: 17px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; border-radius: 50%;
+    padding: 0; background: transparent; color: #8b8e95;
+    font-size: 13px;
+}
+.tab .close:hover { background: #5a2d2d; color: #ff9d9d; }
+
+#tocSelect { max-width: 26vw; min-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+#searchBox {
+    flex: none;
+    width: 110px;
+    height: 26px;
+    border: 1px solid #45484e;
+    border-radius: 5px;
+    background: #33363c;
+    color: var(--bar-fg);
+    padding: 0 8px;
+    font: inherit;
+}
+#searchBox:focus { outline: 1px solid var(--accent); }
+#searchInfo { flex: none; min-width: 3em; font-size: 12px; color: #8b8e95; text-align: left; }
+
+/* ── 阅读区：visibility 切换，保留盒模型尺寸 ──
+ * 不用 display:none：那会让容器瞬间变 0×0，切标签触发 ResizeObserver
+ * 重排，且 Chromium 在滚动模式下可能丢失滚动位置/划选高亮 */
+#views { position: relative; flex: 1; min-height: 0; }
+.book {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+.book.active { visibility: visible; pointer-events: auto; z-index: 1; }
+/* 书籍自身未声明背景色时，正文区垫纯白底，保证黑字清晰可读 */
+.book foliate-view { flex: 1; min-width: 0; user-select: text; background: #fff; }
+.book .msg {
+    margin: auto; padding: 24px 32px;
+    color: #b8bac0; text-align: center; user-select: text;
+}
+.book .msg.error { color: #ff9d9d; }
+
+#empty {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #6d7076; text-align: center; line-height: 2;
+    pointer-events: none;
+}
+body.has-books #empty { display: none; }
+
+/* ── 底部导航条 ─────────────────────────────── */
+#navBar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 8px;
+    background: var(--bar-bg);
+    border-top: 1px solid #0006;
+    font-size: 12px;
+    color: #9a9da3;
+}
+#navBar button { width: 42px; font-size: 16px; }
+#progressSlider { flex: 2; min-width: 120px; height: 26px; accent-color: var(--accent); }
+#status { flex: 1; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* ── 拖拽遮罩（不拦截事件，落到 iframe 上也能开新书）── */
+#dropOverlay {
+    position: fixed; inset: 0; z-index: 99;
+    display: flex; align-items: center; justify-content: center;
+    background: #4a8fe233;
+    border: 3px dashed var(--accent);
+    color: #fff;
+    font-size: 22px;
+    text-shadow: 0 1px 4px #0008;
+    pointer-events: none;
+}
+#dropOverlay[hidden] { display: none; }
+</style>
+</head>
+<body>
+<header id="toolbar">
+    <button id="openBtn" title="打开本地图书文件">📂 打开</button>
+    <input id="fileInput" type="file" multiple hidden
+           accept=".epub,.azw3,.azw,.mobi,.prc,.fb2,.fbz,.cbz,application/epub+zip">
+    <nav id="tabs" title="已打开的图书"></nav>
+    <select id="tocSelect" title="章节目录跳转">
+        <option value="">目录…</option>
+    </select>
+    <input id="searchBox" type="search" placeholder="搜正文…"
+           title="输入 Kindle 上看到的几个字，回车：首次=全书搜索，之后=跳到下一处并自动选中（可直接 Ctrl+C）">
+    <span id="searchInfo"></span>
+    <button id="flowBtn" title="切换 分页 / 连续滚动（跨页复制长段落请用滚动模式）">📄 分页</button>
+</header>
+
+<main id="views">
+    <div id="empty">拖入 <b>.epub / .azw3 / .mobi / .fb2</b> 文件到窗口任意位置<br>或点击左上角「📂 打开」<br><span style="font-size:12px;color:#4d5056">← → / PgUp PgDn 翻页 · 文字可鼠标划选复制</span></div>
+</main>
+
+<div id="navBar">
+    <button id="prevBtn" title="上一页（← / PgUp）">‹</button>
+    <input id="progressSlider" type="range" min="0" max="1" step="0.001" value="0"
+           title="拖动跳转到全书进度百分比（与 Kindle 显示的百分比对齐）">
+    <div id="status"></div>
+    <button id="nextBtn" title="下一页（→ / PgDn）">›</button>
+</div>
+
+<div id="dropOverlay" hidden><div>📄 松开，打开图书</div></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

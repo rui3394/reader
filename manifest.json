@@ -1,0 +1,31 @@
+{
+    "name": "Reader — 本地电子书阅读器",
+    "short_name": "Reader",
+    "description": "极简本地电子书阅读器：EPUB / AZW3 / MOBI / FB2，多标签同时打开，正文可划选复制",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#17181b",
+    "theme_color": "#26282c",
+    "icons": [
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

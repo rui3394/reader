@@ -1,0 +1,18 @@
+# 测试书籍（版权文件，严禁提交）
+test/
+test-books/
+*.epub
+*.azw3
+*.mobi
+*.prc
+*.fb2
+*.fbz
+
+# 部署与工具产物
+.zcode-site/
+.zcode-site.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
